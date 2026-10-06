@@ -50,9 +50,12 @@ export type PlannedTrip = {
   maxDetourM: number
 }
 
-/** Swap-friendly provider interfaces (OSRM/Nominatim now; Mapbox later). */
+/** Swap-friendly provider interfaces (Photon/OSRM now; Mapbox later). */
 export interface GeocodingProvider {
-  search(query: string, opts?: { limit?: number }): Promise<PlaceResult[]>
+  search(
+    query: string,
+    opts?: { limit?: number; signal?: AbortSignal },
+  ): Promise<PlaceResult[]>
   reverse?(lon: number, lat: number): Promise<PlaceResult | null>
 }
 

@@ -2,7 +2,7 @@
 
 Mobile-first PWA: walk A→B in **Sydney** while detouring past nearby Telstra payphones for [Payphone Tag](https://payphonetag.com/).
 
-**Stack (v0):** Vite + React + TypeScript, MapLibre (OSM raster tiles), public OSRM foot, Nominatim (proxied), cached Payphone Tag `/api/payphones` filtered to Greater Sydney. No paid API keys. Mapbox can replace geocode/directions later via `src/lib/routing/providers.ts`.
+**Stack (v0):** Vite + React + TypeScript, MapLibre (OSM raster tiles), public OSRM foot, Photon geocoding via Express proxy (Nominatim optional; in-memory cache + throttle), cached Payphone Tag `/api/payphones` filtered to Greater Sydney. No paid API keys. Mapbox can replace geocode/directions later via `src/lib/routing/providers.ts` / `GEOCODER_PROVIDER`.
 
 ## Run locally
 

@@ -12,4 +12,8 @@ services:
       - key: NODE_VERSION
         value: "22"
       - key: HTTP_USER_AGENT
-        value: PayphoneRouterMVP/0.1 (Render; Sydney walking router)
+        value: PayphoneRouterMVP/0.1 (Render; Sydney walking router; github.com/MattD138/payphone-router)
+      - key: GEOCODER_PROVIDER
+        value: photon
+      - key: GEOCODE_MIN_INTERVAL_MS
+        value: "250"

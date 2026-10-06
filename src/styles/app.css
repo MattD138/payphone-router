@@ -273,6 +273,10 @@ body {
   font-size: 0.88rem;
 }
 
+.error.search-feedback {
+  margin-top: 0.35rem;
+}
+
 .results {
   margin-top: 0.9rem;
   padding-top: 0.75rem;
