@@ -1,7 +1,8 @@
 import {
   CORRIDOR_BUFFER_M,
+  CORRIDOR_CANDIDATE_LIMIT,
   DEFAULT_MAX_DETOUR_M,
-  DEFAULT_MAX_PHONES,
+  UNCAPPED_MAX_PHONES,
 } from '../sydney'
 import {
   distanceToPolylineM,
@@ -25,6 +26,7 @@ export type PlanOptions = {
 
 /**
  * Greedy corridor insertion: up to N phones under max detour meters.
+ * Pass Infinity / UNCAPPED_MAX_PHONES for no N cap (detour + corridor beam only).
  * 1) Direct A→B route
  * 2) Candidates within corridor buffer of the polyline
  * 3) Score by proximity to route; try inserts in along-route order
@@ -37,9 +39,10 @@ export async function planTripViaPayphones(
   phones: PayphoneFeature[],
   opts: PlanOptions = {},
 ): Promise<PlannedTrip> {
-  const maxPhones = opts.maxPhones ?? DEFAULT_MAX_PHONES
+  const maxPhones = opts.maxPhones ?? UNCAPPED_MAX_PHONES
   const maxDetourM = opts.maxDetourM ?? DEFAULT_MAX_DETOUR_M
   const corridorBufferM = opts.corridorBufferM ?? CORRIDOR_BUFFER_M
+  const uncapped = !Number.isFinite(maxPhones)
 
   const direct = await directions.walkingRoute([origin, destination])
 
@@ -65,11 +68,15 @@ export async function planTripViaPayphones(
       return !nearOrigin && !nearDest
     })
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, 40) // beam limit for phone CPU
+    .slice(0, CORRIDOR_CANDIDATE_LIMIT) // beam limit for phone CPU
 
-  // Prefer phones close to the corridor; take top by closeness then order by progress
+  // Prefer phones close to the corridor; take top by closeness then order by progress.
+  // Uncapped: use the full corridor beam (detour still gates inserts).
+  const shortlistCap = uncapped
+    ? candidates.length
+    : Math.min(candidates.length, Math.max(maxPhones * 6, 12))
   const shortlist = candidates
-    .slice(0, Math.max(maxPhones * 6, 12))
+    .slice(0, shortlistCap)
     .sort((a, b) => a.progress - b.progress)
 
   let selected: PayphoneFeature[] = []
@@ -79,7 +86,7 @@ export async function planTripViaPayphones(
   // keep if under detour after re-route.
   const pool = [...shortlist].sort((a, b) => a.dist - b.dist)
   for (const cand of pool) {
-    if (selected.length >= maxPhones) break
+    if (!uncapped && selected.length >= maxPhones) break
     if (selected.some((s) => s.id === cand.phone.id)) continue
 
     const trial = [...selected, cand.phone].sort((a, b) => {

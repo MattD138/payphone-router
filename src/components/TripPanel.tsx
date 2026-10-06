@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import {
   DEFAULT_MAX_DETOUR_M,
   DEFAULT_MAX_PHONES,
+  UNCAPPED_MAX_PHONES,
 } from '../lib/sydney'
 import type { PlaceResult, PlannedTrip } from '../lib/routing/types'
 import {
@@ -42,9 +43,11 @@ export function TripPanel({
   onRoute,
 }: Props) {
   const destId = useId()
+  const fitAsManyId = useId()
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([])
   const [selected, setSelected] = useState<PlaceResult | null>(null)
+  const [fitAsManyAsDetour, setFitAsManyAsDetour] = useState(true)
   const [maxPhones, setMaxPhones] = useState(DEFAULT_MAX_PHONES)
   const [maxDetourM, setMaxDetourM] = useState(DEFAULT_MAX_DETOUR_M)
   const [searching, setSearching] = useState(false)
@@ -175,16 +178,27 @@ export function TripPanel({
       </div>
 
       <div className="controls">
-        <label>
-          Up to {maxPhones} phones
+        <label className="check" htmlFor={fitAsManyId}>
           <input
-            type="range"
-            min={1}
-            max={5}
-            value={maxPhones}
-            onChange={(e) => setMaxPhones(Number(e.target.value))}
+            id={fitAsManyId}
+            type="checkbox"
+            checked={fitAsManyAsDetour}
+            onChange={(e) => setFitAsManyAsDetour(e.target.checked)}
           />
+          <span>Fit as many phones as the detour allows</span>
         </label>
+        {!fitAsManyAsDetour && (
+          <label>
+            Up to {maxPhones} phones
+            <input
+              type="range"
+              min={1}
+              max={5}
+              value={maxPhones}
+              onChange={(e) => setMaxPhones(Number(e.target.value))}
+            />
+          </label>
+        )}
         <label>
           Max detour +{maxDetourM} m
           <input
@@ -204,7 +218,11 @@ export function TripPanel({
         disabled={busy || !selected}
         onClick={() => {
           if (!selected) return
-          onRoute({ destination: selected, maxPhones, maxDetourM })
+          onRoute({
+            destination: selected,
+            maxPhones: fitAsManyAsDetour ? UNCAPPED_MAX_PHONES : maxPhones,
+            maxDetourM,
+          })
         }}
       >
         {busy ? 'Routing…' : 'Route via payphones'}
