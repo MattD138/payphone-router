@@ -32,8 +32,15 @@ export default defineConfig({
     copyMaplibreWorker(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'data/sydney-payphones.geojson'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192.png',
+        'pwa-512.png',
+        'data/sydney-payphones.geojson',
+      ],
       manifest: {
+        id: '/',
         name: 'Payphone Router',
         short_name: 'Payphones',
         description:
@@ -41,28 +48,33 @@ export default defineConfig({
         theme_color: '#134539',
         background_color: '#f3ebe0',
         display: 'standalone',
+        orientation: 'portrait-primary',
         start_url: '/',
+        scope: '/',
         icons: [
           {
             src: '/pwa-192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: '/pwa-512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: '/pwa-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'maskable',
           },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'],
+        navigateFallbackDenylist: [/^\/api\//],
         // Keep GeoJSON out of precache (large); runtime cache instead
         runtimeCaching: [
           {

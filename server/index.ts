@@ -99,6 +99,13 @@ if (fs.existsSync(dist)) {
   app.use('/assets', (_req, res) => {
     res.status(404).type('text/plain').send('Not found')
   })
+  // Same for PWA/static files Safari probes (apple-touch-icon, favicon.ico, etc.)
+  app.get(
+    /\.(?:png|jpe?g|gif|webp|ico|svg|webmanifest|json|js|mjs|css|map|txt|xml)$/i,
+    (_req, res) => {
+      res.status(404).type('text/plain').send('Not found')
+    },
+  )
   app.get(/.*/, (_req, res) => {
     res.sendFile(path.join(dist, 'index.html'))
   })
