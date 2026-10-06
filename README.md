@@ -27,7 +27,7 @@ npm start              # serves dist + API on 0.0.0.0:$PORT (default 3000)
 1. Use HTTPS or localhost; geolocation needs a secure context (LAN IP over HTTP may be blocked — tunnel or deploy to Render).
 2. Tap **Use my location**, allow permission, search a Sydney destination, **Route via payphones**.
 3. Add to Home Screen via Share → Add to Home Screen (manifest + icons included).
-4. **Open in Apple Maps** uses walking directions with intermediate waypoints where Maps accepts them.
+4. **Open in Apple Maps** / **Open in Google Maps** use walking directions with the same intermediate payphone waypoints where each app’s URL scheme accepts them (Google Maps URLs cap at 9 vias; extras are omitted with a UI note).
 5. OSM tiles / FOSSGIS OSRM foot / Photon are rate-limited — fine for personal MVP, not heavy production.
 
 ## Render

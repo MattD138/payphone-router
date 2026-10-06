@@ -273,6 +273,19 @@ body {
   color: var(--teal-deep);
 }
 
+.map-exports {
+  display: grid;
+  gap: 0;
+}
+
+.map-exports .btn.secondary:first-child {
+  margin-top: 0.55rem;
+}
+
+.map-exports .hint {
+  margin: 0.45rem 0 0;
+}
+
 .btn.ghost {
   width: auto;
   min-height: 40px;

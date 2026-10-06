@@ -171,6 +171,49 @@ export function appleMapsUrl(stops: RouteStop[]): string {
     .join('+to:')}&dirflg=w`
 }
 
+/**
+ * Google Maps URLs API (`/maps/dir/?api=1`) allows at most 9 intermediate
+ * waypoints. Universal https link opens the Google Maps app on iPhone when
+ * installed, otherwise the web UI.
+ */
+export const GOOGLE_MAPS_MAX_WAYPOINTS = 9
+
+export type GoogleMapsLink = {
+  url: string
+  /** Intermediate payphone stops dropped to fit the URL waypoint cap. */
+  omittedWaypoints: number
+}
+
+/** Google Maps walking directions URL (origin → vias → destination). */
+export function googleMapsUrl(stops: RouteStop[]): GoogleMapsLink {
+  if (stops.length < 2) {
+    return { url: 'https://www.google.com/maps/', omittedWaypoints: 0 }
+  }
+  const origin = stops[0]
+  const destination = stops[stops.length - 1]
+  const vias = stops.slice(1, -1)
+  const omittedWaypoints = Math.max(0, vias.length - GOOGLE_MAPS_MAX_WAYPOINTS)
+  const keptVias = vias.slice(0, GOOGLE_MAPS_MAX_WAYPOINTS)
+
+  const params = new URLSearchParams({
+    api: '1',
+    origin: `${origin.lat},${origin.lon}`,
+    destination: `${destination.lat},${destination.lon}`,
+    travelmode: 'walking',
+  })
+  if (keptVias.length > 0) {
+    // Pipe-separated lat,lng; encodeURIComponent turns | into %7C (accepted).
+    params.set(
+      'waypoints',
+      keptVias.map((s) => `${s.lat},${s.lon}`).join('|'),
+    )
+  }
+  return {
+    url: `https://www.google.com/maps/dir/?${params.toString()}`,
+    omittedWaypoints,
+  }
+}
+
 export function formatDistance(m: number): string {
   if (m < 1000) return `${Math.round(m)} m`
   return `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`

@@ -9,6 +9,7 @@ import {
   appleMapsUrl,
   formatDistance,
   formatDuration,
+  googleMapsUrl,
 } from '../lib/routing/waypoints'
 import type { GeocodingProvider } from '../lib/routing/types'
 import { PlaceAutocomplete } from './PlaceAutocomplete'
@@ -52,6 +53,7 @@ export function TripPanel({
   const [fitAsManyAsDetour, setFitAsManyAsDetour] = useState(true)
   const [maxPhones, setMaxPhones] = useState(DEFAULT_MAX_PHONES)
   const [maxDetourM, setMaxDetourM] = useState(DEFAULT_MAX_DETOUR_M)
+  const googleMaps = trip ? googleMapsUrl(trip.stops) : null
 
   return (
     <section className="trip-panel" aria-label="Plan a walk">
@@ -184,14 +186,34 @@ export function TripPanel({
               </li>
             ))}
           </ol>
-          <a
-            className="btn secondary"
-            href={appleMapsUrl(trip.stops)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open in Apple Maps
-          </a>
+          {googleMaps && (
+            <div className="map-exports">
+              <a
+                className="btn secondary"
+                href={appleMapsUrl(trip.stops)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in Apple Maps
+              </a>
+              <a
+                className="btn secondary"
+                href={googleMaps.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in Google Maps
+              </a>
+              {googleMaps.omittedWaypoints > 0 && (
+                <p className="hint" role="note">
+                  Google Maps allows 9 stops between A and B — last{' '}
+                  {googleMaps.omittedWaypoints} payphone
+                  {googleMaps.omittedWaypoints === 1 ? '' : 's'} omitted from
+                  that link.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
