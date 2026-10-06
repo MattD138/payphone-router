@@ -17,3 +17,6 @@ services:
         value: photon
       - key: GEOCODE_MIN_INTERVAL_MS
         value: "250"
+      # Real foot graph (Sydney walkways). Do not use router.project-osrm.org — car-only.
+      - key: OSRM_BASE
+        value: https://routing.openstreetmap.de/routed-foot/route/v1/foot

@@ -2,7 +2,8 @@ import type { LngLat } from '../geo'
 import type { DirectionsProvider, WalkingRoute } from './types'
 
 /**
- * Public OSRM foot profile via our server proxy.
+ * Walking directions via our `/api/route` proxy → FOSSGIS OSRM foot
+ * (`routing.openstreetmap.de/routed-foot`). Not project-osrm.org (car-only).
  * Swap: MapboxDirectionsProvider implementing DirectionsProvider.
  */
 export class OsrmDirections implements DirectionsProvider {

@@ -16,8 +16,11 @@ const USER_AGENT =
   process.env.HTTP_USER_AGENT ||
   'PayphoneRouterMVP/0.1 (Sydney walking router; contact: github.com/MattD138/payphone-router)'
 
+// project-osrm.org only hosts a car graph — /foot there still returns driving
+// geometry. FOSSGIS runs a real foot profile (planet, incl. Sydney walkways).
 const OSRM_BASE =
-  process.env.OSRM_BASE || 'https://router.project-osrm.org/route/v1/foot'
+  process.env.OSRM_BASE ||
+  'https://routing.openstreetmap.de/routed-foot/route/v1/foot'
 
 const app = express()
 app.disable('x-powered-by')
@@ -25,7 +28,16 @@ app.use(compression())
 app.use(cors())
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'payphone-router', geocode: geocodeMeta() })
+  res.json({
+    ok: true,
+    service: 'payphone-router',
+    geocode: geocodeMeta(),
+    routing: {
+      profile: 'foot',
+      provider: 'fossgis-osrm-foot',
+      base: OSRM_BASE,
+    },
+  })
 })
 
 app.get('/api/payphones', (_req, res) => {
