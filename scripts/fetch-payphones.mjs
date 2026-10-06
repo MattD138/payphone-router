@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Polite one-shot (or cron) fetch of Payphone Tag /api/payphones,
- * filtered to Greater Sydney active phones → public/data/sydney-payphones.geojson
+ * all active phones in Australia → public/data/australia-payphones.geojson
  *
  * Do not hammer the upstream API. Daily refresh is enough for locations.
  */
@@ -10,12 +10,13 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const out = path.resolve(__dirname, '../public/data/sydney-payphones.geojson')
+const out = path.resolve(__dirname, '../public/data/australia-payphones.geojson')
 
-const BBOX = { minLon: 150.5, maxLon: 151.4, minLat: -34.2, maxLat: -33.4 }
+/** Soft bounds — drop obvious bad coords; game phones are AU-only. */
+const AU_BBOX = { minLon: 112.9, maxLon: 153.65, minLat: -43.75, maxLat: -10.05 }
 const UA =
   process.env.HTTP_USER_AGENT ||
-  'PayphoneRouterMVP/0.1 (Sydney cache builder; polite; contact via repo)'
+  'PayphoneRouter/0.2 (AU cache builder; polite; contact via repo)'
 
 const res = await fetch('https://payphonetag.com/api/payphones', {
   headers: { Accept: 'application/json', 'User-Agent': UA },
@@ -30,15 +31,15 @@ const phones = raw.payphones || []
 const features = []
 for (const p of phones) {
   const [id, lon, lat, holderId, status] = p
+  if (status !== 'active') continue
   if (
-    lon < BBOX.minLon ||
-    lon > BBOX.maxLon ||
-    lat < BBOX.minLat ||
-    lat > BBOX.maxLat
+    lon < AU_BBOX.minLon ||
+    lon > AU_BBOX.maxLon ||
+    lat < AU_BBOX.minLat ||
+    lat > AU_BBOX.maxLat
   ) {
     continue
   }
-  if (status !== 'active') continue
   features.push({
     type: 'Feature',
     geometry: { type: 'Point', coordinates: [lon, lat] },
@@ -56,8 +57,8 @@ const geojson = {
   properties: {
     source: 'https://payphonetag.com/api/payphones',
     fetchedAt: new Date().toISOString(),
-    bbox: BBOX,
-    filter: 'Greater Sydney active only',
+    bbox: AU_BBOX,
+    filter: 'Australia active only (Payphone Tag API)',
     count: features.length,
   },
   features,

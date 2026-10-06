@@ -1,6 +1,8 @@
 import type { FeatureCollection, Point } from 'geojson'
 import type { PayphoneFeature } from './routing/types'
 
+export const PAYPHONE_GEOJSON_PATH = '/data/australia-payphones.geojson'
+
 export type PayphoneCollection = FeatureCollection<
   Point,
   {
@@ -16,12 +18,12 @@ export type PayphoneCollection = FeatureCollection<
   }
 }
 
-export async function loadSydneyPayphones(): Promise<{
+export async function loadAustraliaPayphones(): Promise<{
   geojson: PayphoneCollection
   phones: PayphoneFeature[]
 }> {
-  const res = await fetch('/data/sydney-payphones.geojson')
-  if (!res.ok) throw new Error('Failed to load Sydney payphone cache')
+  const res = await fetch(PAYPHONE_GEOJSON_PATH)
+  if (!res.ok) throw new Error('Failed to load Australia payphone cache')
   const geojson = (await res.json()) as PayphoneCollection
   const phones: PayphoneFeature[] = geojson.features.map((f) => ({
     id: f.properties.id,

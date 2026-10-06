@@ -3,10 +3,12 @@ import {
   CORRIDOR_CANDIDATE_LIMIT,
   DEFAULT_MAX_DETOUR_M,
   UNCAPPED_MAX_PHONES,
-} from '../sydney'
+} from '../australia'
 import {
   distanceToPolylineM,
   haversineM,
+  pointInBbox,
+  polylineBbox,
   progressAlongPolyline,
   type LngLat,
 } from '../geo'
@@ -46,7 +48,12 @@ export async function planTripViaPayphones(
 
   const direct = await directions.walkingRoute([origin, destination])
 
-  const candidates = phones
+  const routeBox = polylineBbox(direct.coordinates, corridorBufferM + 120)
+  const phonesNearRoute = routeBox
+    ? phones.filter((p) => pointInBbox(p.lon, p.lat, routeBox))
+    : phones
+
+  const candidates = phonesNearRoute
     .map((p) => ({
       phone: p,
       dist: distanceToPolylineM(

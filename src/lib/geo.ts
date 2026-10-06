@@ -14,6 +14,46 @@ export function haversineM(a: LngLat, b: LngLat): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
+/** Expand a polyline bbox by ~meters (for coarse phone pre-filter). */
+export function polylineBbox(
+  line: [number, number][],
+  padM: number,
+): { minLon: number; maxLon: number; minLat: number; maxLat: number } | null {
+  if (line.length === 0) return null
+  let minLon = Infinity
+  let maxLon = -Infinity
+  let minLat = Infinity
+  let maxLat = -Infinity
+  for (const [lon, lat] of line) {
+    minLon = Math.min(minLon, lon)
+    maxLon = Math.max(maxLon, lon)
+    minLat = Math.min(minLat, lat)
+    maxLat = Math.max(maxLat, lat)
+  }
+  const midLat = ((minLat + maxLat) / 2) * (Math.PI / 180)
+  const padLon = padM / (111_320 * Math.max(0.2, Math.cos(midLat)))
+  const padLat = padM / 110_540
+  return {
+    minLon: minLon - padLon,
+    maxLon: maxLon + padLon,
+    minLat: minLat - padLat,
+    maxLat: maxLat + padLat,
+  }
+}
+
+export function pointInBbox(
+  lon: number,
+  lat: number,
+  bbox: { minLon: number; maxLon: number; minLat: number; maxLat: number },
+): boolean {
+  return (
+    lon >= bbox.minLon &&
+    lon <= bbox.maxLon &&
+    lat >= bbox.minLat &&
+    lat <= bbox.maxLat
+  )
+}
+
 /** Approximate point-to-polyline distance in meters (great-circle). */
 export function distanceToPolylineM(
   point: LngLat,

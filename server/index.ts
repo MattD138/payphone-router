@@ -9,12 +9,12 @@ import { geocodeMeta, geocodeReverse, geocodeSearch } from './geocode'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
 const dist = path.join(root, 'dist')
-const dataFile = path.join(root, 'public', 'data', 'sydney-payphones.geojson')
+const dataFile = path.join(root, 'public', 'data', 'australia-payphones.geojson')
 
 const PORT = Number(process.env.PORT) || 3000
 const USER_AGENT =
   process.env.HTTP_USER_AGENT ||
-  'PayphoneRouterMVP/0.1 (Sydney walking router; contact: github.com/MattD138/payphone-router)'
+  'PayphoneRouter/0.2 (Australia walking router; contact: github.com/MattD138/payphone-router)'
 
 // project-osrm.org only hosts a car graph — /foot there still returns driving
 // geometry. FOSSGIS runs a real foot profile (planet, incl. Sydney walkways).
@@ -42,7 +42,7 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/payphones', (_req, res) => {
   if (!fs.existsSync(dataFile)) {
-    res.status(503).json({ error: 'Sydney payphone cache missing' })
+    res.status(503).json({ error: 'Australia payphone cache missing' })
     return
   }
   res.setHeader('Cache-Control', 'public, max-age=3600')

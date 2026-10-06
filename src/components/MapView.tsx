@@ -8,7 +8,7 @@ import {
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { FeatureCollection, LineString, Point } from 'geojson'
-import { SYDNEY_CENTER } from '../lib/sydney'
+import { AU_CENTER, AU_DEFAULT_ZOOM, AU_USER_ZOOM } from '../lib/australia'
 import type { PlannedTrip } from '../lib/routing/types'
 
 // Vite folds maplibre into /assets/index-*.js, so the default
@@ -34,14 +34,15 @@ export function MapView({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
+  const userCenteredRef = useRef(false)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     const map = new Map({
       container: containerRef.current,
       style: TILE_STYLE,
-      center: SYDNEY_CENTER,
-      zoom: 12.2,
+      center: AU_CENTER,
+      zoom: AU_DEFAULT_ZOOM,
       attributionControl: { compact: true },
     })
     map.addControl(new NavigationControl({ showCompass: false }), 'top-right')
@@ -51,22 +52,47 @@ export function MapView({
       map.addSource('payphones', {
         type: 'geojson',
         data: emptyPoints(),
+        cluster: true,
+        clusterMaxZoom: 12,
+        clusterRadius: 42,
+      })
+      map.addLayer({
+        id: 'payphones-clusters',
+        type: 'circle',
+        source: 'payphones',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#c88912',
+          'circle-stroke-color': '#1a1510',
+          'circle-stroke-width': 1.5,
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            14,
+            25,
+            18,
+            100,
+            22,
+          ],
+          'circle-opacity': 0.92,
+        },
       })
       map.addLayer({
         id: 'payphones-circle',
         type: 'circle',
         source: 'payphones',
+        filter: ['!', ['has', 'point_count']],
         paint: {
           'circle-radius': [
             'interpolate',
             ['linear'],
             ['zoom'],
             10,
-            3.5,
+            3,
             14,
-            6.5,
+            6,
             16,
-            8,
+            7.5,
           ],
           'circle-color': '#e8a317',
           'circle-stroke-color': '#1a1510',
@@ -233,12 +259,22 @@ export function MapView({
           },
         ],
       })
+      if (!userCenteredRef.current && !trip) {
+        userCenteredRef.current = true
+        map.flyTo({
+          center: [userLocation.lon, userLocation.lat],
+          zoom: AU_USER_ZOOM,
+          duration: 900,
+        })
+      }
     }
     if (map.isStyleLoaded()) apply()
     else map.once('load', apply)
-  }, [userLocation])
+  }, [userLocation, trip])
 
-  return <div className="map-plane" ref={containerRef} aria-label="Sydney map" />
+  return (
+    <div className="map-plane" ref={containerRef} aria-label="Australia map" />
+  )
 }
 
 function emptyPoints(): FeatureCollection<Point> {

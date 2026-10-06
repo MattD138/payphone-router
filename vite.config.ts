@@ -37,14 +37,14 @@ export default defineConfig({
         'apple-touch-icon.png',
         'pwa-192.png',
         'pwa-512.png',
-        'data/sydney-payphones.geojson',
+        'data/australia-payphones.geojson',
       ],
       manifest: {
         id: '/',
         name: 'Payphone Router',
         short_name: 'Payphones',
         description:
-          'Sydney walking routes that detour past Telstra payphones for Payphone Tag.',
+          'Australia walking routes that detour past Telstra payphones for Payphone Tag.',
         theme_color: '#134539',
         background_color: '#f3ebe0',
         display: 'standalone',
@@ -78,10 +78,10 @@ export default defineConfig({
         // Keep GeoJSON out of precache (large); runtime cache instead
         runtimeCaching: [
           {
-            urlPattern: /\/data\/sydney-payphones\.geojson$/,
+            urlPattern: /\/data\/australia-payphones\.geojson$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'sydney-payphones',
+              cacheName: 'australia-payphones',
               expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 },
             },
           },

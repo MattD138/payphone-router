@@ -3,7 +3,7 @@ import {
   DEFAULT_MAX_DETOUR_M,
   DEFAULT_MAX_PHONES,
   UNCAPPED_MAX_PHONES,
-} from '../lib/sydney'
+} from '../lib/australia'
 import type { PlaceResult, PlannedTrip } from '../lib/routing/types'
 import {
   appleMapsUrl,
@@ -59,17 +59,17 @@ export function TripPanel({
     <section className="trip-panel" aria-label="Plan a walk">
       <header className="brand-block">
         <p className="brand">Payphone Router</p>
-        <h1>Walk Sydney. Tag phones on the way.</h1>
+        <h1>Walk Australia. Tag phones on the way.</h1>
         <p className="lede">
-          A→B walking routes that bend past nearby Telstra payphones for Payphone
-          Tag.
+          Nationwide A→B walking routes that bend past nearby Telstra payphones
+          for Payphone Tag.
         </p>
       </header>
 
       <PlaceAutocomplete
         id={originId}
         label="Origin"
-        placeholder="e.g. Central Station, Newtown…"
+        placeholder="e.g. Melbourne Central, Brisbane City…"
         geocoder={geocoder}
         selected={origin}
         onSelect={onOriginChange}
@@ -218,7 +218,7 @@ export function TripPanel({
       )}
 
       <p className="meta">
-        {phoneCount.toLocaleString()} active Sydney phones
+        {phoneCount.toLocaleString()} active AU payphones
         {cacheFetchedAt
           ? ` · cache ${new Date(cacheFetchedAt).toLocaleDateString()}`
           : ''}

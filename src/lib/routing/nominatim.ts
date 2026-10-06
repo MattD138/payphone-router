@@ -1,6 +1,6 @@
 import type { GeocodingProvider, PlaceResult } from './types'
 import { GeocodeError } from './geocode-error'
-import { SYDNEY_BBOX } from '../sydney'
+import { auViewboxNominatim, isInAustralia } from '../australia'
 
 /**
  * Server-proxied geocoder (Photon by default; Nominatim optional upstream).
@@ -23,7 +23,7 @@ export class NominatimGeocoder implements GeocodingProvider {
       q,
       limit: String(opts?.limit ?? 5),
       // Nominatim-order viewbox; server converts for Photon bbox
-      viewbox: `${SYDNEY_BBOX.minLon},${SYDNEY_BBOX.maxLat},${SYDNEY_BBOX.maxLon},${SYDNEY_BBOX.minLat}`,
+      viewbox: auViewboxNominatim(),
       bounded: '1',
     })
     let res: Response
@@ -69,18 +69,15 @@ export class NominatimGeocoder implements GeocodingProvider {
       )
     }
 
-    // New shape: { provider, results }
+    let results: PlaceResult[] = []
     if (
       data &&
       typeof data === 'object' &&
       Array.isArray((data as { results?: unknown }).results)
     ) {
-      return (data as { results: PlaceResult[] }).results
-    }
-
-    // Legacy Nominatim array (if an old deploy is briefly mixed)
-    if (Array.isArray(data)) {
-      return (data as Array<{
+      results = (data as { results: PlaceResult[] }).results
+    } else if (Array.isArray(data)) {
+      results = (data as Array<{
         place_id: number
         display_name: string
         lon: string
@@ -93,7 +90,7 @@ export class NominatimGeocoder implements GeocodingProvider {
       }))
     }
 
-    return []
+    return results.filter((r) => isInAustralia(r.lon, r.lat))
   }
 
   async reverse(lon: number, lat: number): Promise<PlaceResult | null> {

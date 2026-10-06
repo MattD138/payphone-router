@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FeatureCollection, Point } from 'geojson'
 import { MapView } from './components/MapView'
 import { TripPanel } from './components/TripPanel'
-import { loadSydneyPayphones } from './lib/payphones'
+import { loadAustraliaPayphones } from './lib/payphones'
 import { createDirections, createGeocoder } from './lib/routing/providers'
 import { planTripViaPayphones } from './lib/routing/waypoints'
 import type { PayphoneFeature, PlaceResult, PlannedTrip } from './lib/routing/types'
-import { isInSydney } from './lib/sydney'
+import { isInAustralia } from './lib/australia'
 import './styles/app.css'
 
 export default function App() {
@@ -27,7 +27,7 @@ export default function App() {
     let cancelled = false
     ;(async () => {
       try {
-        const { geojson, phones: list } = await loadSydneyPayphones()
+        const { geojson, phones: list } = await loadAustraliaPayphones()
         if (cancelled) return
         setPhonesGeojson(geojson)
         setPhones(list)
@@ -56,10 +56,10 @@ export default function App() {
       async (pos) => {
         const lon = pos.coords.longitude
         const lat = pos.coords.latitude
-        if (!isInSydney(lon, lat)) {
+        if (!isInAustralia(lon, lat)) {
           setLocating(false)
           setError(
-            'MVP is Sydney-only. Your GPS is outside the Greater Sydney bbox.',
+            'Your location looks outside Australia. This app only routes within AU.',
           )
           return
         }
@@ -93,12 +93,12 @@ export default function App() {
     maxDetourM: number
   }) => {
     setError(null)
-    if (!isInSydney(args.origin.lon, args.origin.lat)) {
-      setError('Origin must be inside Greater Sydney for this MVP.')
+    if (!isInAustralia(args.origin.lon, args.origin.lat)) {
+      setError('Origin must be inside Australia.')
       return
     }
-    if (!isInSydney(args.destination.lon, args.destination.lat)) {
-      setError('Destination must be inside Greater Sydney for this MVP.')
+    if (!isInAustralia(args.destination.lon, args.destination.lat)) {
+      setError('Destination must be inside Australia.')
       return
     }
     setBusy(true)

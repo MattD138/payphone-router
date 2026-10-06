@@ -26,7 +26,7 @@ type CacheEntry = { at: number; body: GeocodeOk }
 
 const USER_AGENT =
   process.env.HTTP_USER_AGENT ||
-  'PayphoneRouterMVP/0.1 (Sydney walking router; contact: github.com/MattD138/payphone-router)'
+  'PayphoneRouter/0.2 (Australia walking router; contact: github.com/MattD138/payphone-router)'
 
 const CONTACT_EMAIL = process.env.GEOCODER_EMAIL || ''
 
@@ -42,11 +42,20 @@ const MIN_INTERVAL_MS =
   Number(process.env.GEOCODE_MIN_INTERVAL_MS) ||
   (PROVIDER === 'nominatim' ? 1100 : 250)
 
-const SYDNEY_BBOX = {
-  minLon: 150.5,
-  maxLon: 151.4,
-  minLat: -34.2,
-  maxLat: -33.4,
+const AU_BBOX = {
+  minLon: 112.9,
+  maxLon: 153.65,
+  minLat: -43.75,
+  maxLat: -10.05,
+}
+
+function isInAustralia(lon: number, lat: number): boolean {
+  return (
+    lon >= AU_BBOX.minLon &&
+    lon <= AU_BBOX.maxLon &&
+    lat >= AU_BBOX.minLat &&
+    lat <= AU_BBOX.maxLat
+  )
 }
 
 const cache = new Map<string, CacheEntry>()
@@ -133,7 +142,7 @@ async function searchPhoton(
   params.set(
     'bbox',
     bbox ||
-      `${SYDNEY_BBOX.minLon},${SYDNEY_BBOX.minLat},${SYDNEY_BBOX.maxLon},${SYDNEY_BBOX.maxLat}`,
+      `${AU_BBOX.minLon},${AU_BBOX.minLat},${AU_BBOX.maxLon},${AU_BBOX.maxLat}`,
   )
   await throttleOutbound()
   const upstream = await fetch(`${PHOTON_BASE}/api/?${params}`, {
@@ -173,6 +182,7 @@ async function searchPhoton(
       }
     })
     .filter((r): r is PlaceResult => r != null)
+    .filter((r) => isInAustralia(r.lon, r.lat))
   return { provider: 'photon', results }
 }
 
@@ -218,7 +228,7 @@ async function searchNominatim(
   else {
     params.set(
       'viewbox',
-      `${SYDNEY_BBOX.minLon},${SYDNEY_BBOX.maxLat},${SYDNEY_BBOX.maxLon},${SYDNEY_BBOX.minLat}`,
+      `${AU_BBOX.minLon},${AU_BBOX.maxLat},${AU_BBOX.maxLon},${AU_BBOX.minLat}`,
     )
   }
   if (bounded != null) params.set('bounded', bounded)
@@ -308,7 +318,7 @@ export async function geocodeSearch(args: {
     }
   }
   const limit = Math.min(Math.max(Number(args.limit) || 5, 1), 10)
-  const cacheKey = `s:${PROVIDER}:${q.toLowerCase()}:${limit}:${args.bbox || args.viewbox || 'sydney'}:${args.bounded ?? '1'}`
+  const cacheKey = `s:${PROVIDER}:${q.toLowerCase()}:${limit}:${args.bbox || args.viewbox || 'au'}:${args.bounded ?? '1'}`
   const cached = cacheGet(cacheKey)
   if (cached) return { status: 200, body: cached }
 

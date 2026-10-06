@@ -21,7 +21,7 @@ export function PlaceAutocomplete({
   geocoder,
   selected,
   onSelect,
-  emptyMessage = 'No places found in Greater Sydney. Try a different name.',
+  emptyMessage = 'No places found in Australia. Try a different name.',
 }: Props) {
   const [query, setQuery] = useState(selected?.label ?? '')
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([])

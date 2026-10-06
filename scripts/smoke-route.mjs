@@ -5,7 +5,7 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 
 const geo = JSON.parse(
-  readFileSync(new URL('../public/data/sydney-payphones.geojson', import.meta.url), 'utf8'),
+  readFileSync(new URL('../public/data/australia-payphones.geojson', import.meta.url), 'utf8'),
 )
 const phones = geo.features.map((f) => ({
   id: f.properties.id,
