@@ -3,12 +3,18 @@ import {
   LngLatBounds,
   Map,
   NavigationControl,
+  setWorkerUrl,
   type GeoJSONSource,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { FeatureCollection, LineString, Point } from 'geojson'
 import { SYDNEY_CENTER } from '../lib/sydney'
 import type { PlannedTrip } from '../lib/routing/types'
+
+// Vite folds maplibre into /assets/index-*.js, so the default
+// `./maplibre-gl-worker.mjs` sibling resolve 404s (SPA HTML). Pin the
+// unbundled worker copied into dist/assets by the Vite plugin.
+setWorkerUrl(`${import.meta.env.BASE_URL}assets/maplibre-gl-worker.mjs`)
 
 /** Free vector style (no API key). Swap for Mapbox style URL later. */
 const TILE_STYLE = 'https://tiles.openfreemap.org/styles/liberty'

@@ -126,7 +126,12 @@ app.get('/api/route/:coords', async (req, res) => {
 })
 
 if (fs.existsSync(dist)) {
-  app.use(express.static(dist, { maxAge: '1h', index: false }))
+  app.use(express.static(dist, { maxAge: '1h', index: false, fallthrough: true }))
+  // Never SPA-fallback missing hashed assets — browsers reject HTML as JS modules
+  // (e.g. MapLibre worker), which previously blanked the map.
+  app.use('/assets', (_req, res) => {
+    res.status(404).type('text/plain').send('Not found')
+  })
   app.get(/.*/, (_req, res) => {
     res.sendFile(path.join(dist, 'index.html'))
   })
