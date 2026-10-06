@@ -283,6 +283,21 @@ body {
   font-size: 0.9rem;
 }
 
+.origin-actions {
+  margin: -0.25rem 0 0.55rem;
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+}
+
+.origin-actions .btn.ghost {
+  width: auto;
+}
+
+.origin-actions .hint {
+  margin: 0;
+}
+
 .error {
   margin: 0.65rem 0 0;
   color: var(--danger);

@@ -22,12 +22,12 @@ export class GeocodeError extends Error {
         return 'Search is rate-limited right now. Wait a moment and try again.'
       }
       if (err.code === 'bad_request') return err.message
-      return err.message || 'Destination search failed. Try again.'
+      return err.message || 'Place search failed. Try again.'
     }
     if (err instanceof DOMException && err.name === 'AbortError') {
       return ''
     }
     if (err instanceof Error) return err.message
-    return 'Destination search failed. Try again.'
+    return 'Place search failed. Try again.'
   }
 }

@@ -17,13 +17,8 @@ export default function App() {
     useState<FeatureCollection<Point> | null>(null)
   const [phones, setPhones] = useState<PayphoneFeature[]>([])
   const [cacheFetchedAt, setCacheFetchedAt] = useState<string>()
-  const [userLocation, setUserLocation] = useState<{
-    lon: number
-    lat: number
-  } | null>(null)
-  const [originLabel, setOriginLabel] = useState(
-    'Tap “Use my location” (Sydney only)',
-  )
+  const [origin, setOrigin] = useState<PlaceResult | null>(null)
+  const [locating, setLocating] = useState(false)
   const [trip, setTrip] = useState<PlannedTrip | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,25 +51,35 @@ export default function App() {
       setError('Geolocation is not available in this browser.')
       return
     }
+    setLocating(true)
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lon = pos.coords.longitude
         const lat = pos.coords.latitude
         if (!isInSydney(lon, lat)) {
+          setLocating(false)
           setError(
             'MVP is Sydney-only. Your GPS is outside the Greater Sydney bbox.',
           )
           return
         }
-        setUserLocation({ lon, lat })
+        let label = `${lat.toFixed(5)}, ${lon.toFixed(5)}`
         try {
           const place = await geocoder.reverse?.(lon, lat)
-          setOriginLabel(place?.label ?? `${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+          if (place?.label) label = place.label
         } catch {
-          setOriginLabel(`${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+          // keep coordinate label
         }
+        setOrigin({
+          id: `gps:${lon.toFixed(5)},${lat.toFixed(5)}`,
+          label,
+          lon,
+          lat,
+        })
+        setLocating(false)
       },
       (err) => {
+        setLocating(false)
         setError(err.message || 'Could not read location')
       },
       { enableHighAccuracy: true, timeout: 12000 },
@@ -82,13 +87,14 @@ export default function App() {
   }
 
   const onRoute = async (args: {
+    origin: PlaceResult
     destination: PlaceResult
     maxPhones: number
     maxDetourM: number
   }) => {
     setError(null)
-    if (!userLocation) {
-      setError('Set origin with “Use my location” first.')
+    if (!isInSydney(args.origin.lon, args.origin.lat)) {
+      setError('Origin must be inside Greater Sydney for this MVP.')
       return
     }
     if (!isInSydney(args.destination.lon, args.destination.lat)) {
@@ -99,7 +105,11 @@ export default function App() {
     try {
       const planned = await planTripViaPayphones(
         directions,
-        { ...userLocation, label: originLabel },
+        {
+          lon: args.origin.lon,
+          lat: args.origin.lat,
+          label: args.origin.label,
+        },
         {
           lon: args.destination.lon,
           lat: args.destination.lat,
@@ -126,16 +136,20 @@ export default function App() {
         phonesGeojson={phonesGeojson}
         trip={trip}
         showDirect
-        userLocation={userLocation}
+        userLocation={
+          origin ? { lon: origin.lon, lat: origin.lat } : null
+        }
       />
       <TripPanel
         geocoder={geocoder}
         phoneCount={phones.length}
         cacheFetchedAt={cacheFetchedAt}
         busy={busy}
+        locating={locating}
         error={error}
         trip={trip}
-        originLabel={originLabel}
+        origin={origin}
+        onOriginChange={setOrigin}
         onUseLocation={onUseLocation}
         onRoute={onRoute}
       />

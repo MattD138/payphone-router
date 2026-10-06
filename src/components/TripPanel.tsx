@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import {
   DEFAULT_MAX_DETOUR_M,
   DEFAULT_MAX_PHONES,
@@ -11,89 +11,47 @@ import {
   formatDuration,
 } from '../lib/routing/waypoints'
 import type { GeocodingProvider } from '../lib/routing/types'
-import { GeocodeError } from '../lib/routing/geocode-error'
+import { PlaceAutocomplete } from './PlaceAutocomplete'
 
 type Props = {
   geocoder: GeocodingProvider
   phoneCount: number
   cacheFetchedAt?: string
   busy: boolean
+  locating: boolean
   error: string | null
   trip: PlannedTrip | null
-  originLabel: string
+  origin: PlaceResult | null
+  onOriginChange: (place: PlaceResult | null) => void
   onUseLocation: () => void
   onRoute: (args: {
+    origin: PlaceResult
     destination: PlaceResult
     maxPhones: number
     maxDetourM: number
   }) => void
 }
 
-const SEARCH_DEBOUNCE_MS = 450
-
 export function TripPanel({
   geocoder,
   phoneCount,
   cacheFetchedAt,
   busy,
+  locating,
   error,
   trip,
-  originLabel,
+  origin,
+  onOriginChange,
   onUseLocation,
   onRoute,
 }: Props) {
+  const originId = useId()
   const destId = useId()
   const fitAsManyId = useId()
-  const [query, setQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<PlaceResult[]>([])
-  const [selected, setSelected] = useState<PlaceResult | null>(null)
+  const [destination, setDestination] = useState<PlaceResult | null>(null)
   const [fitAsManyAsDetour, setFitAsManyAsDetour] = useState(true)
   const [maxPhones, setMaxPhones] = useState(DEFAULT_MAX_PHONES)
   const [maxDetourM, setMaxDetourM] = useState(DEFAULT_MAX_DETOUR_M)
-  const [searching, setSearching] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
-  const [searchedEmpty, setSearchedEmpty] = useState(false)
-
-  useEffect(() => {
-    if (query.trim().length < 3 || selected?.label === query) {
-      setSuggestions([])
-      setSearchError(null)
-      setSearchedEmpty(false)
-      setSearching(false)
-      return
-    }
-
-    const controller = new AbortController()
-    setSearching(true)
-    setSearchError(null)
-    setSearchedEmpty(false)
-
-    const t = window.setTimeout(async () => {
-      try {
-        const results = await geocoder.search(query, {
-          limit: 5,
-          signal: controller.signal,
-        })
-        if (controller.signal.aborted) return
-        setSuggestions(results)
-        setSearchedEmpty(results.length === 0)
-        setSearchError(null)
-      } catch (e) {
-        if (controller.signal.aborted) return
-        if (e instanceof DOMException && e.name === 'AbortError') return
-        setSuggestions([])
-        setSearchedEmpty(false)
-        setSearchError(GeocodeError.userMessage(e) || 'Destination search failed.')
-      } finally {
-        if (!controller.signal.aborted) setSearching(false)
-      }
-    }, SEARCH_DEBOUNCE_MS)
-
-    return () => {
-      controller.abort()
-      window.clearTimeout(t)
-    }
-  }, [query, geocoder, selected])
 
   return (
     <section className="trip-panel" aria-label="Plan a walk">
@@ -106,76 +64,47 @@ export function TripPanel({
         </p>
       </header>
 
-      <div className="field">
-        <span className="label">Origin</span>
-        <button type="button" className="btn ghost" onClick={onUseLocation}>
-          Use my location
+      <PlaceAutocomplete
+        id={originId}
+        label="Origin"
+        placeholder="e.g. Central Station, Newtown…"
+        geocoder={geocoder}
+        selected={origin}
+        onSelect={onOriginChange}
+      />
+      <div className="origin-actions">
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={onUseLocation}
+          disabled={locating || busy}
+          aria-busy={locating}
+        >
+          {locating ? 'Locating…' : 'Use my location'}
         </button>
-        <p className="hint">{originLabel}</p>
+        {locating && (
+          <p className="hint" role="status">
+            Getting your GPS position…
+          </p>
+        )}
+        {!locating && origin && (
+          <p className="hint" role="status">
+            Starting from {origin.label}
+          </p>
+        )}
+        {!locating && !origin && (
+          <p className="hint">Search a start place, or use GPS</p>
+        )}
       </div>
 
-      <div className="field">
-        <label className="label" htmlFor={destId}>
-          Destination
-        </label>
-        <input
-          id={destId}
-          className="input"
-          placeholder="e.g. Circular Quay, Surry Hills…"
-          value={query}
-          autoComplete="off"
-          aria-busy={searching}
-          aria-describedby={
-            searchError
-              ? `${destId}-error`
-              : searchedEmpty
-                ? `${destId}-empty`
-                : searching
-                  ? `${destId}-status`
-                  : undefined
-          }
-          onChange={(e) => {
-            setQuery(e.target.value)
-            setSelected(null)
-          }}
-        />
-        {searching && (
-          <p className="hint" id={`${destId}-status`} role="status">
-            Searching…
-          </p>
-        )}
-        {searchError && (
-          <p className="error search-feedback" id={`${destId}-error`} role="alert">
-            {searchError}
-          </p>
-        )}
-        {!searching && !searchError && searchedEmpty && (
-          <p className="hint" id={`${destId}-empty`} role="status">
-            No places found in Greater Sydney. Try a different name.
-          </p>
-        )}
-        {suggestions.length > 0 && (
-          <ul className="suggest" role="listbox">
-            {suggestions.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  role="option"
-                  onClick={() => {
-                    setSelected(s)
-                    setQuery(s.label)
-                    setSuggestions([])
-                    setSearchedEmpty(false)
-                    setSearchError(null)
-                  }}
-                >
-                  {s.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <PlaceAutocomplete
+        id={destId}
+        label="Destination"
+        placeholder="e.g. Circular Quay, Surry Hills…"
+        geocoder={geocoder}
+        selected={destination}
+        onSelect={setDestination}
+      />
 
       <div className="controls">
         <label className="check" htmlFor={fitAsManyId}>
@@ -215,11 +144,12 @@ export function TripPanel({
       <button
         type="button"
         className="btn primary"
-        disabled={busy || !selected}
+        disabled={busy || locating || !origin || !destination}
         onClick={() => {
-          if (!selected) return
+          if (!origin || !destination) return
           onRoute({
-            destination: selected,
+            origin,
+            destination,
             maxPhones: fitAsManyAsDetour ? UNCAPPED_MAX_PHONES : maxPhones,
             maxDetourM,
           })

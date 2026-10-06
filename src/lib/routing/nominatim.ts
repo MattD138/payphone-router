@@ -31,7 +31,7 @@ export class NominatimGeocoder implements GeocodingProvider {
       res = await fetch(`${this.baseUrl}?${params}`, { signal: opts?.signal })
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') throw e
-      throw new GeocodeError('Network error during destination search', {
+      throw new GeocodeError('Network error during place search', {
         code: 'network',
         status: 0,
       })
