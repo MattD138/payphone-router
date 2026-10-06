@@ -1,0 +1,15 @@
+# Render Blueprint — static-built SPA served by thin Express API
+# (geocode/route proxies + cached Sydney payphones). Binds 0.0.0.0:$PORT.
+services:
+  - type: web
+    name: payphone-router
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HTTP_USER_AGENT
+        value: PayphoneRouterMVP/0.1 (Render; Sydney walking router)
