@@ -53,8 +53,10 @@ export function MapView({
         type: 'geojson',
         data: emptyPoints(),
         cluster: true,
-        clusterMaxZoom: 12,
-        clusterRadius: 42,
+        // Uncluster when zoom > this. 10 → suburb/neighbourhood (~11+) shows pins;
+        // continent/city overview (≤10) still clusters.
+        clusterMaxZoom: 10,
+        clusterRadius: 28,
       })
       map.addLayer({
         id: 'payphones-clusters',
