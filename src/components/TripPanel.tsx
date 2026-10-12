@@ -11,6 +11,7 @@ import {
   formatDuration,
   googleMapsUrl,
 } from '../lib/routing/waypoints'
+import type { TravelMode } from '../lib/routing/travelMode'
 import type { GeocodingProvider } from '../lib/routing/types'
 import { PlaceAutocomplete } from './PlaceAutocomplete'
 
@@ -23,6 +24,8 @@ type Props = {
   error: string | null
   trip: PlannedTrip | null
   origin: PlaceResult | null
+  travelMode: TravelMode
+  onTravelModeChange: (mode: TravelMode) => void
   onOriginChange: (place: PlaceResult | null) => void
   onUseLocation: () => void
   onRoute: (args: {
@@ -30,6 +33,7 @@ type Props = {
     destination: PlaceResult
     maxPhones: number
     maxDetourM: number
+    travelMode: TravelMode
   }) => void
 }
 
@@ -42,6 +46,8 @@ export function TripPanel({
   error,
   trip,
   origin,
+  travelMode,
+  onTravelModeChange,
   onOriginChange,
   onUseLocation,
   onRoute,
@@ -49,20 +55,22 @@ export function TripPanel({
   const originId = useId()
   const destId = useId()
   const fitAsManyId = useId()
+  const modeGroupId = useId()
   const [destination, setDestination] = useState<PlaceResult | null>(null)
   const [fitAsManyAsDetour, setFitAsManyAsDetour] = useState(true)
   const [maxPhones, setMaxPhones] = useState(DEFAULT_MAX_PHONES)
   const [maxDetourM, setMaxDetourM] = useState(DEFAULT_MAX_DETOUR_M)
-  const googleMaps = trip ? googleMapsUrl(trip.stops) : null
+  const modeForMaps = trip?.travelMode ?? travelMode
+  const googleMaps = trip ? googleMapsUrl(trip.stops, modeForMaps) : null
 
   return (
-    <section className="trip-panel" aria-label="Plan a walk">
+    <section className="trip-panel" aria-label="Plan a trip">
       <header className="brand-block">
         <p className="brand">Payphone Router</p>
-        <h1>Walk Australia. Tag phones on the way.</h1>
+        <h1>Australia routes. Tag phones on the way.</h1>
         <p className="lede">
-          Nationwide A→B walking routes that bend past nearby Telstra payphones
-          for Payphone Tag.
+          Nationwide A→B walking or driving routes that bend past nearby Telstra
+          payphones for Payphone Tag.
         </p>
       </header>
 
@@ -109,6 +117,35 @@ export function TripPanel({
       />
 
       <div className="controls">
+        <div
+          className="mode-toggle"
+          role="group"
+          aria-labelledby={modeGroupId}
+        >
+          <span id={modeGroupId} className="mode-toggle-label">
+            Travel mode
+          </span>
+          <div className="mode-toggle-seg">
+            <button
+              type="button"
+              className={travelMode === 'walking' ? 'active' : undefined}
+              aria-pressed={travelMode === 'walking'}
+              disabled={busy}
+              onClick={() => onTravelModeChange('walking')}
+            >
+              Walk
+            </button>
+            <button
+              type="button"
+              className={travelMode === 'driving' ? 'active' : undefined}
+              aria-pressed={travelMode === 'driving'}
+              disabled={busy}
+              onClick={() => onTravelModeChange('driving')}
+            >
+              Drive
+            </button>
+          </div>
+        </div>
         <label className="check" htmlFor={fitAsManyId}>
           <input
             id={fitAsManyId}
@@ -154,6 +191,7 @@ export function TripPanel({
             destination,
             maxPhones: fitAsManyAsDetour ? UNCAPPED_MAX_PHONES : maxPhones,
             maxDetourM,
+            travelMode,
           })
         }}
       >
@@ -168,6 +206,10 @@ export function TripPanel({
             <p>
               <strong>{formatDistance(trip.viaPhones.distanceM)}</strong>
               <span> · {formatDuration(trip.viaPhones.durationS)}</span>
+              <span className="hint mode-badge">
+                {' '}
+                · {trip.travelMode === 'driving' ? 'Drive' : 'Walk'}
+              </span>
             </p>
             <p className="hint">
               {trip.selectedPhones.length} phone
@@ -190,7 +232,7 @@ export function TripPanel({
             <div className="map-exports">
               <a
                 className="btn secondary"
-                href={appleMapsUrl(trip.stops)}
+                href={appleMapsUrl(trip.stops, modeForMaps)}
                 target="_blank"
                 rel="noreferrer"
               >

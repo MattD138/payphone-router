@@ -1,9 +1,14 @@
 import type { LngLat } from '../geo'
-import type { DirectionsProvider, WalkingRoute } from './types'
+import type { DirectionsProvider, RouteResult } from './types'
+import {
+  DEFAULT_TRAVEL_MODE,
+  osrmProfileForMode,
+  type TravelMode,
+} from './travelMode'
 
 /**
- * Walking directions via our `/api/route` proxy → FOSSGIS OSRM foot
- * (`routing.openstreetmap.de/routed-foot`). Not project-osrm.org (car-only).
+ * Directions via our `/api/route` proxy → FOSSGIS OSRM
+ * (`routed-foot` / `routed-car`). Not project-osrm.org (car-only demo).
  * Swap: MapboxDirectionsProvider implementing DirectionsProvider.
  */
 export class OsrmDirections implements DirectionsProvider {
@@ -13,7 +18,10 @@ export class OsrmDirections implements DirectionsProvider {
     this.baseUrl = baseUrl
   }
 
-  async walkingRoute(waypoints: LngLat[]): Promise<WalkingRoute> {
+  async route(
+    waypoints: LngLat[],
+    mode: TravelMode = DEFAULT_TRAVEL_MODE,
+  ): Promise<RouteResult> {
     if (waypoints.length < 2) {
       throw new Error('Need at least origin and destination')
     }
@@ -22,6 +30,7 @@ export class OsrmDirections implements DirectionsProvider {
       overview: 'full',
       geometries: 'geojson',
       steps: 'false',
+      profile: osrmProfileForMode(mode),
     })
     const res = await fetch(`${this.baseUrl}/${coords}?${params}`)
     if (!res.ok) {
@@ -39,7 +48,7 @@ export class OsrmDirections implements DirectionsProvider {
       message?: string
     }
     if (!data.routes?.[0]) {
-      throw new Error(data.message || data.code || 'No walking route found')
+      throw new Error(data.message || data.code || 'No route found')
     }
     const r = data.routes[0]
     return {
@@ -51,5 +60,10 @@ export class OsrmDirections implements DirectionsProvider {
         durationS: l.duration,
       })),
     }
+  }
+
+  /** @deprecated Prefer `route(waypoints, 'walking')`. */
+  walkingRoute(waypoints: LngLat[]): Promise<RouteResult> {
+    return this.route(waypoints, 'walking')
   }
 }

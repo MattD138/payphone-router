@@ -1,4 +1,5 @@
 import type { LngLat } from '../geo'
+import type { TravelMode } from './travelMode'
 
 export type PlaceResult = {
   id: string
@@ -12,12 +13,16 @@ export type RouteLegSummary = {
   durationS: number
 }
 
-export type WalkingRoute = {
+/** Geometry + distance for a planned path (walk or drive). */
+export type RouteResult = {
   coordinates: [number, number][] // [lon, lat]
   distanceM: number
   durationS: number
   legs?: RouteLegSummary[]
 }
+
+/** @deprecated Use RouteResult — kept for existing imports. */
+export type WalkingRoute = RouteResult
 
 export type PayphoneFeature = {
   id: number
@@ -41,13 +46,15 @@ export type RouteStop =
 export type PlannedTrip = {
   origin: LngLat & { label: string }
   destination: LngLat & { label: string }
-  direct: WalkingRoute
-  viaPhones: WalkingRoute
+  direct: RouteResult
+  viaPhones: RouteResult
   stops: RouteStop[]
   selectedPhones: PayphoneFeature[]
   detourM: number
   maxPhones: number
   maxDetourM: number
+  /** Mode used to compute this trip (Maps export must match). */
+  travelMode: TravelMode
 }
 
 /** Swap-friendly provider interfaces (Photon/OSRM now; Mapbox later). */
@@ -60,5 +67,7 @@ export interface GeocodingProvider {
 }
 
 export interface DirectionsProvider {
-  walkingRoute(waypoints: LngLat[]): Promise<WalkingRoute>
+  route(waypoints: LngLat[], mode?: TravelMode): Promise<RouteResult>
+  /** @deprecated Prefer `route(waypoints, 'walking')`. */
+  walkingRoute?(waypoints: LngLat[]): Promise<RouteResult>
 }

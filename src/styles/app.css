@@ -207,6 +207,62 @@ body {
   margin: 0.75rem 0 0.9rem;
 }
 
+.mode-toggle {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mode-toggle-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mode-toggle-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.mode-toggle-seg button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.mode-toggle-seg button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.mode-toggle-seg button.active {
+  background: linear-gradient(135deg, var(--teal), var(--teal-deep));
+  color: #f7f3ec;
+  box-shadow: 0 4px 12px rgba(19, 69, 57, 0.22);
+}
+
+.mode-toggle-seg button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mode-badge {
+  display: inline;
+  font-weight: 600;
+}
+
 .controls label {
   display: grid;
   gap: 0.25rem;

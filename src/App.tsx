@@ -7,6 +7,11 @@ import { createDirections, createGeocoder } from './lib/routing/providers'
 import { planTripViaPayphones } from './lib/routing/waypoints'
 import type { PayphoneFeature, PlaceResult, PlannedTrip } from './lib/routing/types'
 import { isInAustralia } from './lib/australia'
+import {
+  loadTravelMode,
+  saveTravelMode,
+  type TravelMode,
+} from './lib/routing/travelMode'
 import './styles/app.css'
 
 export default function App() {
@@ -22,6 +27,7 @@ export default function App() {
   const [trip, setTrip] = useState<PlannedTrip | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [travelMode, setTravelMode] = useState<TravelMode>(() => loadTravelMode())
 
   useEffect(() => {
     let cancelled = false
@@ -44,6 +50,13 @@ export default function App() {
       cancelled = true
     }
   }, [])
+
+  const onTravelModeChange = (mode: TravelMode) => {
+    setTravelMode(mode)
+    saveTravelMode(mode)
+    // Clear stale geometry/Maps links so mode never mismatches the route.
+    setTrip(null)
+  }
 
   const onUseLocation = () => {
     setError(null)
@@ -91,6 +104,7 @@ export default function App() {
     destination: PlaceResult
     maxPhones: number
     maxDetourM: number
+    travelMode: TravelMode
   }) => {
     setError(null)
     if (!isInAustralia(args.origin.lon, args.origin.lat)) {
@@ -119,6 +133,7 @@ export default function App() {
         {
           maxPhones: args.maxPhones,
           maxDetourM: args.maxDetourM,
+          travelMode: args.travelMode,
         },
       )
       setTrip(planned)
@@ -149,6 +164,8 @@ export default function App() {
         error={error}
         trip={trip}
         origin={origin}
+        travelMode={travelMode}
+        onTravelModeChange={onTravelModeChange}
         onOriginChange={setOrigin}
         onUseLocation={onUseLocation}
         onRoute={onRoute}

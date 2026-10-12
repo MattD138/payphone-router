@@ -16,14 +16,21 @@ import type {
   DirectionsProvider,
   PayphoneFeature,
   PlannedTrip,
+  RouteResult,
   RouteStop,
-  WalkingRoute,
 } from './types'
+import {
+  DEFAULT_TRAVEL_MODE,
+  appleDirflg,
+  googleTravelMode,
+  type TravelMode,
+} from './travelMode'
 
 export type PlanOptions = {
   maxPhones?: number
   maxDetourM?: number
   corridorBufferM?: number
+  travelMode?: TravelMode
 }
 
 /**
@@ -33,6 +40,9 @@ export type PlanOptions = {
  * 2) Candidates within corridor buffer of the polyline
  * 3) Score by proximity to route; try inserts in along-route order
  * 4) Keep set if total detour ≤ budget; drop worst impact if over
+ *
+ * All OSRM calls use `opts.travelMode` (default walking) so Drive re-runs
+ * insertion on the car profile.
  */
 export async function planTripViaPayphones(
   directions: DirectionsProvider,
@@ -44,9 +54,12 @@ export async function planTripViaPayphones(
   const maxPhones = opts.maxPhones ?? UNCAPPED_MAX_PHONES
   const maxDetourM = opts.maxDetourM ?? DEFAULT_MAX_DETOUR_M
   const corridorBufferM = opts.corridorBufferM ?? CORRIDOR_BUFFER_M
+  const travelMode = opts.travelMode ?? DEFAULT_TRAVEL_MODE
   const uncapped = !Number.isFinite(maxPhones)
 
-  const direct = await directions.walkingRoute([origin, destination])
+  const routeVia = (waypoints: LngLat[]) => directions.route(waypoints, travelMode)
+
+  const direct = await routeVia([origin, destination])
 
   const routeBox = polylineBbox(direct.coordinates, corridorBufferM + 120)
   const phonesNearRoute = routeBox
@@ -87,7 +100,7 @@ export async function planTripViaPayphones(
     .sort((a, b) => a.progress - b.progress)
 
   let selected: PayphoneFeature[] = []
-  let viaPhones: WalkingRoute = direct
+  let viaPhones: RouteResult = direct
 
   // Greedy grow: try adding next closest unused phone (by corridor dist),
   // keep if under detour after re-route.
@@ -109,7 +122,7 @@ export async function planTripViaPayphones(
     })
 
     try {
-      const route = await directions.walkingRoute([
+      const route = await routeVia([
         origin,
         ...trial.map((p) => ({ lon: p.lon, lat: p.lat })),
         destination,
@@ -127,7 +140,7 @@ export async function planTripViaPayphones(
   // If we somehow exceeded (shouldn't), drop from end until OK
   while (selected.length > 0 && viaPhones.distanceM - direct.distanceM > maxDetourM) {
     selected = selected.slice(0, -1)
-    viaPhones = await directions.walkingRoute([
+    viaPhones = await routeVia([
       origin,
       ...selected.map((p) => ({ lon: p.lon, lat: p.lat })),
       destination,
@@ -161,11 +174,15 @@ export async function planTripViaPayphones(
     detourM: Math.max(0, viaPhones.distanceM - direct.distanceM),
     maxPhones,
     maxDetourM,
+    travelMode,
   }
 }
 
-/** Apple Maps URL with waypoints where feasible (walking). */
-export function appleMapsUrl(stops: RouteStop[]): string {
+/** Apple Maps URL with waypoints; `dirflg` matches travel mode. */
+export function appleMapsUrl(
+  stops: RouteStop[],
+  mode: TravelMode = DEFAULT_TRAVEL_MODE,
+): string {
   // maps.apple.com: saddr, daddr; intermediate via as +to: in daddr chain
   // Safari-friendly pattern: daddr=lat,lon+to:lat,lon
   if (stops.length < 2) return 'https://maps.apple.com/'
@@ -175,7 +192,7 @@ export function appleMapsUrl(stops: RouteStop[]): string {
   // Keep +to: unencoded so Apple Maps accepts waypoints.
   return `https://maps.apple.com/?saddr=${encodeURIComponent(saddr)}&daddr=${rest
     .map((s) => encodeURIComponent(`${s.lat},${s.lon}`))
-    .join('+to:')}&dirflg=w`
+    .join('+to:')}&dirflg=${appleDirflg(mode)}`
 }
 
 /**
@@ -191,8 +208,11 @@ export type GoogleMapsLink = {
   omittedWaypoints: number
 }
 
-/** Google Maps walking directions URL (origin → vias → destination). */
-export function googleMapsUrl(stops: RouteStop[]): GoogleMapsLink {
+/** Google Maps directions URL (origin → vias → destination). */
+export function googleMapsUrl(
+  stops: RouteStop[],
+  mode: TravelMode = DEFAULT_TRAVEL_MODE,
+): GoogleMapsLink {
   if (stops.length < 2) {
     return { url: 'https://www.google.com/maps/', omittedWaypoints: 0 }
   }
@@ -206,7 +226,7 @@ export function googleMapsUrl(stops: RouteStop[]): GoogleMapsLink {
     api: '1',
     origin: `${origin.lat},${origin.lon}`,
     destination: `${destination.lat},${destination.lon}`,
-    travelmode: 'walking',
+    travelmode: googleTravelMode(mode),
   })
   if (keptVias.length > 0) {
     // Pipe-separated lat,lng; encodeURIComponent turns | into %7C (accepted).
