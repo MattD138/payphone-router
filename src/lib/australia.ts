@@ -20,6 +20,13 @@ export const DEFAULT_MAX_PHONES = 3
  */
 export const UNCAPPED_MAX_PHONES = Number.POSITIVE_INFINITY
 export const DEFAULT_MAX_DETOUR_M = 800
+/** Detour range slider floor (both modes). */
+export const MIN_DETOUR_M = 200
+/** Walking-mode detour slider ceiling. */
+export const WALK_MAX_DETOUR_M = 2000
+/** Driving-mode detour slider ceiling (~5 km). */
+export const DRIVE_MAX_DETOUR_M = 5000
+export const DETOUR_STEP_M = 100
 export const CORRIDOR_BUFFER_M = 600
 /** Corridor candidate beam — hard performance bound regardless of maxPhones. */
 export const CORRIDOR_CANDIDATE_LIMIT = 40

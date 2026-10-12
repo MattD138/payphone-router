@@ -1,8 +1,12 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import {
   DEFAULT_MAX_DETOUR_M,
   DEFAULT_MAX_PHONES,
+  DETOUR_STEP_M,
+  DRIVE_MAX_DETOUR_M,
+  MIN_DETOUR_M,
   UNCAPPED_MAX_PHONES,
+  WALK_MAX_DETOUR_M,
 } from '../lib/australia'
 import type { PlaceResult, PlannedTrip } from '../lib/routing/types'
 import {
@@ -14,6 +18,10 @@ import {
 import type { TravelMode } from '../lib/routing/travelMode'
 import type { GeocodingProvider } from '../lib/routing/types'
 import { PlaceAutocomplete } from './PlaceAutocomplete'
+
+function detourSliderMax(mode: TravelMode): number {
+  return mode === 'driving' ? DRIVE_MAX_DETOUR_M : WALK_MAX_DETOUR_M
+}
 
 type Props = {
   geocoder: GeocodingProvider
@@ -60,8 +68,14 @@ export function TripPanel({
   const [fitAsManyAsDetour, setFitAsManyAsDetour] = useState(true)
   const [maxPhones, setMaxPhones] = useState(DEFAULT_MAX_PHONES)
   const [maxDetourM, setMaxDetourM] = useState(DEFAULT_MAX_DETOUR_M)
+  const detourMax = detourSliderMax(travelMode)
   const modeForMaps = trip?.travelMode ?? travelMode
   const googleMaps = trip ? googleMapsUrl(trip.stops, modeForMaps) : null
+
+  // Drive allows a higher ceiling; switching back to Walk clamps over-budget values.
+  useEffect(() => {
+    setMaxDetourM((v) => Math.min(v, detourSliderMax(travelMode)))
+  }, [travelMode])
 
   return (
     <section className="trip-panel" aria-label="Plan a trip">
@@ -168,13 +182,13 @@ export function TripPanel({
           </label>
         )}
         <label>
-          Max detour +{maxDetourM} m
+          Max detour +{formatDistance(maxDetourM)}
           <input
             type="range"
-            min={200}
-            max={2000}
-            step={100}
-            value={maxDetourM}
+            min={MIN_DETOUR_M}
+            max={detourMax}
+            step={DETOUR_STEP_M}
+            value={Math.min(maxDetourM, detourMax)}
             onChange={(e) => setMaxDetourM(Number(e.target.value))}
           />
         </label>
