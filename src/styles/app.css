@@ -231,6 +231,10 @@ body {
 }
 
 .mode-toggle-seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   min-height: 44px;
   border: 0;
   border-radius: 9px;
@@ -241,6 +245,11 @@ body {
   color: var(--muted);
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.mode-toggle-icon {
+  flex-shrink: 0;
+  display: block;
 }
 
 .mode-toggle-seg button:active:not(:disabled) {

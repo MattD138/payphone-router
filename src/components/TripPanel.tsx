@@ -23,6 +23,44 @@ function detourSliderMax(mode: TravelMode): number {
   return mode === 'driving' ? DRIVE_MAX_DETOUR_M : WALK_MAX_DETOUR_M
 }
 
+/** Walking figure; decorative — button text keeps the accessible name. */
+function WalkIcon() {
+  return (
+    <svg
+      className="mode-toggle-icon"
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M13.5 5.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-3.7 3.4L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.36-.54-.97-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7Z"
+      />
+    </svg>
+  )
+}
+
+/** Side-view car; decorative — button text keeps the accessible name. */
+function DriveIcon() {
+  return (
+    <svg
+      className="mode-toggle-icon"
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99ZM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16Zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5ZM5 11l1.5-4.5h11L19 11H5Z"
+      />
+    </svg>
+  )
+}
+
 type Props = {
   geocoder: GeocodingProvider
   phoneCount: number
@@ -147,6 +185,7 @@ export function TripPanel({
               disabled={busy}
               onClick={() => onTravelModeChange('walking')}
             >
+              <WalkIcon />
               Walk
             </button>
             <button
@@ -156,6 +195,7 @@ export function TripPanel({
               disabled={busy}
               onClick={() => onTravelModeChange('driving')}
             >
+              <DriveIcon />
               Drive
             </button>
           </div>
